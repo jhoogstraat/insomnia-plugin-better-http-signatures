@@ -2,7 +2,6 @@
 
 This is a plugin for [Insomnia](https://insomnia.rest/) that allows the signing of HTTP Messages.
 It is based on the [HTTP Signature Plugin](https://github.com/adnsio/insomnia-plugin-http-signature#readme).
-
 To find out more about the http signature spec, look [here](https://tools.ietf.org/html/draft-cavage-http-signatures-10).
 
 ##  Installation
@@ -21,5 +20,3 @@ The Live Preview will show a template of the signing string. There are no values
 
 -  The `Date` header is added if needed.
 -  `Content-Type` and `Content-Length` headers are used when available (eg. in post requests).
-
-<-- Screenshot -->

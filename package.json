@@ -1,0 +1,14 @@
+{
+  "name": "insomnia-plugin-better-http-signatures",
+  "version": "1.0.0",
+  "author": "Joshua Hoogstraat",
+  "description": "Generate HTTP Signatures with HMAC or RSA signing algorithms",
+  "repository": "github:jhoogstraat/insomnia-plugin-better-http-signatures",
+  "license": "MIT",
+  "main": "plugin.js",
+  "insomnia": {
+    "name": "betterHttpSignatures",
+    "description": "Generate HTTP Signatures"
+  },
+  "devDependencies": {}
+}

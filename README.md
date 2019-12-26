@@ -1,4 +1,4 @@
-#  Better HTTP Signatures for Insomnia REST Client
+#  Better HTTP Signatures for Insomnia
 
 This is a plugin for [Insomnia](https://insomnia.rest/) that allows the signing of HTTP Messages.
 It is based on the [HTTP Signature Plugin](https://github.com/adnsio/insomnia-plugin-http-signature#readme).
@@ -14,7 +14,7 @@ Add the `HTTP Signature` template tag as auth token or header value and fill the
 
 ##  Q&A
 
-RSA Private Keys are set without headers (`-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----`).
+RSA Private Keys are set without headers and newlines (`-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----`).
 
 The Live Preview will show a template of the signing string. There are no values, because they are inserted when a request is fired.
 

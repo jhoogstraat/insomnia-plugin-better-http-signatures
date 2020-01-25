@@ -6,7 +6,7 @@ To find out more about the http signature spec, look [here](https://tools.ietf.o
 
 ##  Installation
 
-Install the `insomnia-plugin-better-http-signature` plugin from Preferences -> Plugins.
+Install the `insomnia-plugin-better-http-signatures` plugin from Preferences -> Plugins.
 
 ##  How to use
 

@@ -113,12 +113,12 @@ module.exports.requestHooks = [async (context) => {
   const encoding = await context.store.getItem("enc")
 
   const signature = generateSignature(signingString, alg, privKey, encoding)
-  const signatureHeader = `keyId="${keyId}",algorithm="${alg.toLowerCase()}",headers="${headers}",signature="${signature}"`
+  const signatureHeader = `Signature keyId="${keyId}",algorithm="${alg.toLowerCase()}",headers="${headers}",signature="${signature}"`
 
   console.log("Signing String:\n" + signingString)
   console.log("Signature header:\n" + signatureHeader)
 
-  context.request.setHeader("Signature", signatureHeader)
+  context.request.setHeader("Authorization", signatureHeader)
 }]
 
 function generateSignature(string, signAlgorithm, base64encPrivKey, encoding) {

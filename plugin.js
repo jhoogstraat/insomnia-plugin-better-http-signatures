@@ -84,7 +84,10 @@ module.exports.requestHooks = [async (context) => {
   signatureHeaders.forEach(header => {
     const signingString = composeSigningString(context, signedHeaders)
     const signature = generateSignature(signingString, alg, privKey, encoding)
-    const signatureHeader = `keyId="${keyId}",algorithm="${alg.toLowerCase()}",headers="${signedHeaders}",signature="${signature}"`
+    var signatureHeader = `keyId="${keyId}",algorithm="${alg.toLowerCase()}",headers="${signedHeaders}",signature="${signature}"`
+
+    if (header.name != "Signature")
+      signatureHeader = "Signature " + signatureHeader
 
     console.log("Signing String:\n" + signingString)
     console.log("Signature header:\n" + signatureHeader)
@@ -92,7 +95,6 @@ module.exports.requestHooks = [async (context) => {
     context.request.setHeader(header.name, signatureHeader)
   })
 }]
-
 
 function composeSigningString(context, signedHeaders) {
   // Generate complete URL (with parameters)
@@ -102,16 +104,13 @@ function composeSigningString(context, signedHeaders) {
   }
 
   var signingComps = []
-  var usedSigningHeaders = []
 
   signedHeaders.split(" ").forEach(header => {
     switch (header) {
       case "(request-target)":
-        usedSigningHeaders.push(header)
         signingComps.push(`${header}: ${context.request.getMethod().toLowerCase()} ${requestUrl.pathname}${requestUrl.search}`)
         break
       case "host":
-        usedSigningHeaders.push(header)
         signingComps.push(`${header}: ${requestUrl.host}`)
         break
       case "date":
@@ -121,7 +120,6 @@ function composeSigningString(context, signedHeaders) {
           var dateHeader = new Date().toGMTString()
           context.request.setHeader("Date", dateHeader)
         }
-        usedSigningHeaders.push(header)
         signingComps.push(`${header}: ${dateHeader}`)
         break
       case "content-type":
@@ -164,3 +162,4 @@ function generateSignature(string, signAlgorithm, base64encPrivKey, encoding) {
   }
 
 }
+

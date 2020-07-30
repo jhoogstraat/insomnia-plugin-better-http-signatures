@@ -48,18 +48,19 @@ module.exports.templateTags = [
     ],
 
     async run(context, keyId, base64PrivateKey, signAlgorithm, encoding, headers) {
+
       if (!keyId) throw new Error('missing keyId')
       if (!base64PrivateKey) throw new Error('missing privateKey')
 
       await Promise.all([
-        context.store.setItem("headers", headers),
-        context.store.setItem("keyId", keyId),
-        context.store.setItem("privKey", base64PrivateKey),
-        context.store.setItem("alg", signAlgorithm),
-        context.store.setItem("enc", encoding)
+        context.store.setItem("bhh-headers", headers),
+        context.store.setItem("bhh-keyId", keyId),
+        context.store.setItem("bhh-privKey", base64PrivateKey),
+        context.store.setItem("bhh-alg", signAlgorithm),
+        context.store.setItem("bhh-enc", encoding)
       ])
 
-      return headers.split(" ").map(header => {
+      return "better-http-signatures: The Signature will be generated on send. These are just the headers used:\n" + headers.split(" ").map(header => {
         return `${header}:`
       }).join("\n")
     },
@@ -67,15 +68,44 @@ module.exports.templateTags = [
 ]
 
 module.exports.requestHooks = [async (context) => {
+  const signatureHeaders = context.request.getHeaders().filter(header => header.value.startsWith("better-http-signatures:"))
+
+  if (signatureHeaders.length == 0)
+    return
+
+  console.log("Inserting signature into http headers " + signatureHeaders.map(h => "'" + h.name + "'").join(", "))
+
+  const signedHeaders = await context.store.getItem("bhh-headers")
+  const keyId = await context.store.getItem("bhh-keyId")
+  const alg = await context.store.getItem("bhh-alg")
+  const privKey = await context.store.getItem("bhh-privKey")
+  const encoding = await context.store.getItem("bhh-enc")
+
+  signatureHeaders.forEach(header => {
+    const signingString = composeSigningString(context, signedHeaders)
+    const signature = generateSignature(signingString, alg, privKey, encoding)
+    var signatureHeader = `keyId="${keyId}",algorithm="${alg.toLowerCase()}",headers="${signedHeaders}",signature="${signature}"`
+
+    if (header.name != "Signature")
+      signatureHeader = "Signature " + signatureHeader
+
+    console.log("Signing String:\n" + signingString)
+    console.log("Signature header:\n" + signatureHeader)
+
+    context.request.setHeader(header.name, signatureHeader)
+  })
+}]
+
+function composeSigningString(context, signedHeaders) {
+  // Generate complete URL (with parameters)
   const requestUrl = new URL(context.request.getUrl())
   for (const parameter of context.request.getParameters()) {
     requestUrl.searchParams.append(parameter.name, parameter.value)
   }
 
-  var headers = await context.store.getItem("headers")
   var signingComps = []
 
-  headers.split(" ").forEach(header => {
+  signedHeaders.split(" ").forEach(header => {
     switch (header) {
       case "(request-target)":
         signingComps.push(`${header}: ${context.request.getMethod().toLowerCase()} ${requestUrl.pathname}${requestUrl.search}`)
@@ -95,38 +125,29 @@ module.exports.requestHooks = [async (context) => {
       case "content-type":
         if (context.request.hasHeader("Content-Type")) {
           signingComps.push(`${header}: ${context.request.getHeader("Content-Type")}`)
+        } else {
+          throw new Error("Cannot generate signature using content-type and content-length, because no body was found!")
         }
         break
       case "content-length":
         if (context.request.hasHeader("Content-Type")) {
-          signingComps.push(`${header}: ${context.request.getBodyText().length}`)
+          signingComps.push(`${header}: ${context.request.getBody().text.length}`)
+        } else {
+          throw new Error("Cannot generate signature using content-type and content-length, because no body was found!")
         }
         break
     }
   })
 
-  const signingString = signingComps.join('\n')
-
-  const keyId = await context.store.getItem("keyId")
-  const alg = await context.store.getItem("alg")
-  const privKey = await context.store.getItem("privKey")
-  const encoding = await context.store.getItem("enc")
-
-  const signature = generateSignature(signingString, alg, privKey, encoding)
-  const signatureHeader = `keyId="${keyId}",algorithm="${alg.toLowerCase()}",headers="${headers}",signature="${signature}"`
-
-  console.log("Signing String:\n" + signingString)
-  console.log("Signature header:\n" + signatureHeader)
-
-  context.request.setHeader("Signature", signatureHeader)
-}]
+  return signingComps.join('\n')
+}
 
 function generateSignature(string, signAlgorithm, base64encPrivKey, encoding) {
   const alg = signAlgorithm.split("-")
   const signAlg = alg[0]
   const digestAlg = alg[1]
 
-  console.log("Signing Request with Alg: "+signAlgorithm)
+  console.log("Signing Request with: " + signAlgorithm)
 
   switch (signAlg) {
     case 'RSA':
